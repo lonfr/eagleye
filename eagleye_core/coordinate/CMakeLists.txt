@@ -1,8 +1,12 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(coordinate)
 
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 find_package(catkin REQUIRED COMPONENTS
   roscpp
+  geodesy
 )
 
 catkin_package(
@@ -21,10 +25,23 @@ add_library(coordinate
   src/enu2llh.cpp
   src/hgeoid.cpp
   src/ll2xy.cpp
+  src/llh2xyz.cpp
   src/xyz2enu.cpp
   src/xyz2enu_vel.cpp
+  src/ll2xy_mgrs.cpp
 )
 
 target_link_libraries(coordinate
   ${catkin_LIBRARIES}
+)
+
+install(DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  FILES_MATCHING PATTERN "*.hpp"
+)
+
+install(TARGETS coordinate
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

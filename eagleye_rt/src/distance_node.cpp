@@ -23,14 +23,46 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef COORDINATE_H
-#define COORDINATE_H
+/*
+ * distance.cpp
+ * Author MapIV Sekino
+ */
 
-extern void ll2xy(int, double*, double*);
-extern void ecef2llh(double*, double*);
-extern void enu2llh(double*, double*, double*);
-extern void hgeoid(double*, double*);
-extern void xyz2enu(double*, double*, double*);
-extern void xyz2enu_vel(double*, double*, double*);
+#include "ros/ros.h"
+#include "coordinate/coordinate.hpp"
+#include "navigation/navigation.hpp"
 
-#endif /*COORDINATE_H */
+static ros::Publisher pub;
+static eagleye_msgs::VelocityScaleFactor velocity_scale_factor;
+static eagleye_msgs::Distance distance;
+
+struct DistanceStatus distance_status;
+
+void velocity_scale_factor_callback(const eagleye_msgs::VelocityScaleFactor::ConstPtr& msg)
+{
+  distance.header = msg->header;
+  distance.header.frame_id = "base_link";
+  velocity_scale_factor.header = msg->header;
+  velocity_scale_factor.scale_factor = msg->scale_factor;
+  velocity_scale_factor.correction_velocity = msg->correction_velocity;
+  velocity_scale_factor.status = msg->status;
+  distance_estimate(velocity_scale_factor,&distance_status,&distance);
+
+  if(distance_status.time_last != 0)
+  {
+    pub.publish(distance);
+  }
+}
+
+int main(int argc, char** argv)
+{
+  ros::init(argc, argv, "distance");
+
+  ros::NodeHandle n;
+  ros::Subscriber sub1 = n.subscribe("eagleye/velocity_scale_factor", 1000, velocity_scale_factor_callback);
+  pub = n.advertise<eagleye_msgs::Distance>("eagleye/distance", 1000);
+
+  ros::spin();
+
+  return 0;
+}
